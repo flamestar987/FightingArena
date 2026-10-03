@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Chronicles of Aetheria </title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div id="game-container">
+        <header>
+            <h1> Chronicles of Aetheria </h1>
+        </header>
+        <div id="main-display">
+            <div id="room-description">
+                <p>Welcome, traveler. The world awaits.</p>
+            </div>
+            <div id="combat-log"></div>
+            <div id="items-found" class="hidden"></div>
+        </div>
+        
+        <div id="status-bar">
+            <div id="player-stats">
+                <div id="hp-bar-container"><div id="hp-bar"></div></div>
+                <div id="gold-display">Gold: 0</div>
+                <div id="level-display">Level: 1</div>
+            </div>
+        </div>
+
+        <div id="controls">
+            <div class="movement-buttons">
+                <button onclick="game.move('north')">N</button>
+                <div class="row">
+                    <button onclick="game.move('west')">W</button>
+                    <button onclick="game.move('east')">E</button>
+                </div>
+                <button onclick="game.move('south')">S</button>
+            </div>
+            <div class="action-buttons">
+                <button onclick="game.use_potion()">Heal</button>
+                <button onclick="game.attack()">Attack</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="game_logic.js"></script>
+</body>
+</html>
