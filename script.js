@@ -1,192 +1,24 @@
-class Game {
-    constructor() {
-        this.player = {
-            hp: 100,
-            maxHp: 100,
-            level: 1,
-            xp: 0,
-            gold: 50,
-            inventory: ['potion', 'potion']
-        };
-        this.currentRoom = 'town_square';
-        this.inCombat = false;
-        this.currentEnemy = null;
-        
-        this.rooms = {
-            'town_square': {
-                name: "Town Square",
-                description: "You stand in the peaceful town of Aetheria. The sun is shining, and children are playing.",
-                exits: { north: 'dark_forest' },
-                enemies: [],
-                loot: []
-            },
-            'dark_forest': {
-                name: "The Dark Forest",
-                description: "Tall trees block out the sun. You hear rustling in the underbrush. A path leads deeper into the woods.",
-                exits: { south: 'town_square', north: 'cave_entrance' },
-                enemies: [
-                    { name: "Rabid Wolf", hp: 30, atk: 8, xp: 20, gold: 15 },
-                    { name: "Goblin Scavenger", hp: 45, atk: 10, xp: 30, gold: 25 }
-                ],
-                loot: ['potion']
-            },
-            'cave_entrance': {
-                name: "Cave Entrance",
-                description: "A cold, damp wind blows out of the darkness ahead. The entrance is lined with strange, glowing mushrooms.",
-                exits: { south: 'dark_forest', north: 'boss_chamber' },
-                enemies: [
-                    { name: "Giant Bat", hp: 60, atk: 12, xp: 40, gold: 30 },
-                    { name: "Cave Troll", hp: 90, atk: 15, xp: 60, gold: 50 }
-                ],
-                loot: []
-            },
-            'boss_chamber': {
-                name: "The Boss's Lair",
-                description: "A massive cavern. In the center, a dragon lies coiled around a pile of gold.",
-                exits: { south: 'cave_entrance' },
-                enemies: [
-                    { name: "Eldritch Dragon", hp: 200, atk: 25, xp: 500, gold: 500 }
-                ],
-                loot: ['sword_of_light']
-            }
-        };
-
-        this.ui = {
-            description: document.getElementById('room-description'),
-            combatLog: document.getElementById('combat-log'),
-            hpBar: document.getElementById('hp-bar'),
-            goldDisplay: document.getElementById('gold-display'),
-            levelDisplay: document.getElementById('level-display'),
-            itemsFound: document.getElementById('items-found'),
-            buttons: document.querySelectorAll('button')
-        };
-
-        this.updateUI();
-    }
-
-    log(message, type = 'info') {
-        const line = document.createElement('p');
-        line.textContent = `> ${message}`;
-        line.style.color = type === 'combat' ? 'var(--danger-color)' : 'var(--text-color)';
-        line.style.margin = '5px 0';
-        this.ui.combatLog.appendChild(line);
-        this.ui.combatLog.scrollTop = this.ui.combatLog.scrollHeight;
-    }
-
-    updateUI() {
-        const hpPercent = (this.player.hp / this.player.maxHp) * 100;
-        this.ui.hpBar.style.width = `${Math.max(0, hpPercent)}%`;
-        this.ui.goldDisplay.textContent = `Gold: ${this.player.gold}`;
-        this.ui.levelDisplay.textContent = `Level: ${this.player.level}`;
-        
-        // Disable buttons during combat
-        this.ui.buttons.forEach(btn => btn.disabled = this.inCombat);
-    }
-
-    renderRoom() {
-        const room = this.rooms[this.currentRoom];
-        this.ui.description.innerHTML = `<strong>${room.name}</strong><br>${room.description}`;
-        this.ui.combatLog.innerHTML = ''; // Clear combat log on room change
-        this.inCombat = false;
-        
-        // Check for loot
-        if (room.loot.length > 0) {
-            const foundItem = room.loot.shift();
-            this.player.inventory.push(foundItem);
-            this.ui.itemsFound.textContent = `You found: ${foundItem.toUpperCase()}!`;
-            this.ui.itemsFound.classList.remove('hidden');
-            this.log(`You found an item: ${foundItem.toUpperCase()}`, 'success');
-        } else {
-            this.ui.itemsFound.classList.add('hidden');
-        }
-
-        this.updateUI();
-    }
-
-    move(direction) {
-        if (this.inCombat) {
-            this.log("You cannot flee from combat!", 'combat');
-            return;
-        }
-
-        const room = this.rooms[this.currentRoom];
-        if (room.exits[direction]) {
-            this.currentRoom = room.exits[direction];
-            this.renderRoom();
-        } else {
-            this.log("You cannot go that way.", 'combat');
-        }
-    }
-
-    usePotion() {
-        const potionIndex = this.player.inventory.indexOf('potion');
-        if (potionIndex > -1) {
-            this.player.hp = Math.min(this.player.hp + 50, this.player.maxHp);
-            this.player.inventory.splice(potionIndex, 1);
-            this.log(`You used a potion and recovered health. (${this.player.hp}/${this.player.maxHp})`, 'success');
-            this.updateUI();
-        } else {
-            this.log("You don't have any potions!", 'combat');
-        }
-    }
-
-    attack() {
-        const room = this.rooms[this.currentRoom];
-        const enemies = room.enemies;
-
-        if (enemies.length === 0) {
-            this.log("There is nothing to attack here.", 'combat');
-            return;
-        }
-
-        this.inCombat = true;
-        this.currentEnemy = { ...enemies[0] }; // Clone the first enemy
-
-        // Player Turn
-        const playerDmg = Math.floor(Math.random() * 10) + 5 + (this.player.level * 3);
-        this.currentEnemy.hp -= playerDmg;
-        this.log(`You attacked the ${this.currentEnemy.name} for ${playerDmg} damage!`, 'combat');
-
-        if (this.currentEnemy.hp <= 0) {
-            this.log(`You defeated the ${this.currentEnemy.name}!`, 'success');
-            this.player.gold += this.currentEnemy.gold;
-            this.player.xp += this.currentEnemy.xp;
-            
-            // Remove enemy from the room
-            const enemyIndex = enemies.findIndex(e => e.name === this.currentEnemy.name);
-            enemies.splice(enemyIndex, 1);
-            
-            // Check for level up
-            if (this.player.xp >= this.player.level * 100) {
-                this.player.level++;
-                this.player.maxHp += 20;
-                this.player.hp = this.player.maxHp;
-                this.log(`LEVEL UP! You are now level ${this.player.level}.`, 'success');
-            }
-            
-            this.currentEnemy = null;
-            this.updateUI();
-            this.renderRoom(); // Re-render room to clear combat state
-        } else {
-            // Enemy Turn
-            setTimeout(() => {
-                if (this.currentEnemy) {
-                    const enemyDmg = Math.floor(Math.random() * this.currentEnemy.atk);
-                    this.player.hp -= enemyDmg;
-                    this.log(`The ${this.currentEnemy.name} hit you for ${enemyDmg} damage!`, 'combat');
-                    this.updateUI();
-                    
-                    if (this.player.hp <= 0) {
-                        this.log("You have been defeated. Refresh to restart.", 'combat');
-                        this.inCombat = false;
-                        this.ui.buttons.forEach(btn => btn.disabled = false);
-                    }
-                }
-            }, 1000); // Small delay for the enemy's turn
-        }
-    }
-}
-
-// Initialize the game when the page loads
-const game = new Game();
-game.renderRoom();
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';
+const menu=document.getElementById('menu'),hud=document.getElementById('hud'),errorMessage=document.getElementById('errorMessage');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x87ceeb);scene.fog=new THREE.Fog(0x87ceeb,18,65);
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,1000);
+const renderer=new THREE.WebGLRenderer({antialias:false});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2));document.body.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xffffff,0x61734a,2));const sun=new THREE.DirectionalLight(0xffffff,2);sun.position.set(15,25,10);scene.add(sun);
+const materials={grass:new THREE.MeshLambertMaterial({color:0x55aa36}),dirt:new THREE.MeshLambertMaterial({color:0x88552e}),stone:new THREE.MeshLambertMaterial({color:0x888888}),wood:new THREE.MeshLambertMaterial({color:0x96602e}),leaves:new THREE.MeshLambertMaterial({color:0x287a30})};
+const geometry=new THREE.BoxGeometry(1,1,1),blocks=new Map(),blockMeshes=[];const key=(x,y,z)=>x+','+y+','+z;
+function addBlock(x,y,z,type='grass'){const id=key(x,y,z);if(blocks.has(id))return;const mesh=new THREE.Mesh(geometry,materials[type]||materials.grass);mesh.position.set(x,y,z);mesh.userData={x,y,z,type};scene.add(mesh);blocks.set(id,mesh);blockMeshes.push(mesh)}
+function removeBlock(mesh){if(!mesh?.userData)return;const{x,y,z}=mesh.userData;scene.remove(mesh);blocks.delete(key(x,y,z));const i=blockMeshes.indexOf(mesh);if(i>=0)blockMeshes.splice(i,1)}
+for(let x=-15;x<=15;x++)for(let z=-15;z<=15;z++){const h=Math.floor(2+Math.sin(x*.35)*Math.cos(z*.3)*1.5);for(let y=0;y<=h;y++)addBlock(x,y,z,y===h?'grass':'dirt');if(Math.random()<.035&&Math.abs(x)>3&&Math.abs(z)>3){for(let y=h+1;y<=h+3;y++)addBlock(x,y,z,'wood');for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++)for(let dy=2;dy<=4;dy++)if(Math.random()>.15)addBlock(x+dx,h+dy,z+dz,'leaves')}}
+camera.position.set(0,6,8);let yaw=0,pitch=0,playing=false,selectedBlock='grass',velocityY=0,grounded=false;const keys={},raycaster=new THREE.Raycaster();
+function startGame(){menu.style.display='none';hud.style.display='block';playing=true;renderer.domElement.requestPointerLock?.()}
+document.getElementById('playButton').addEventListener('click',startGame);
+document.addEventListener('pointerlockchange',()=>{if(document.pointerLockElement===renderer.domElement){playing=true;menu.style.display='none';hud.style.display='block'}});
+document.addEventListener('mousemove',e=>{if(!playing||document.pointerLockElement!==renderer.domElement)return;yaw-=e.movementX*.002;pitch-=e.movementY*.002;pitch=Math.max(-1.5,Math.min(1.5,pitch));camera.rotation.order='YXZ';camera.rotation.set(pitch,yaw,0)});
+document.addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='Space')e.preventDefault();if(e.code==='Space'&&grounded&&playing){velocityY=8;grounded=false}});document.addEventListener('keyup',e=>keys[e.code]=false);
+document.querySelectorAll('#hotbar button').forEach(b=>b.addEventListener('click',()=>{selectedBlock=b.dataset.block;document.querySelectorAll('#hotbar button').forEach(v=>v.classList.remove('selected'));b.classList.add('selected')}));document.querySelector('#hotbar button').classList.add('selected');
+function getTarget(){raycaster.setFromCamera(new THREE.Vector2(0,0),camera);return raycaster.intersectObjects(blockMeshes,false)[0]}
+renderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());renderer.domElement.addEventListener('mousedown',e=>{if(!playing||document.pointerLockElement!==renderer.domElement)return;const hit=getTarget();if(!hit||hit.distance>6)return;if(e.button===0)removeBlock(hit.object);if(e.button===2){const n=hit.face.normal.clone().transformDirection(hit.object.matrixWorld),p=hit.object.position.clone().add(n),x=Math.round(p.x),y=Math.round(p.y),z=Math.round(p.z);if(Math.abs(x-camera.position.x)<.8&&Math.abs(z-camera.position.z)<.8&&y>=camera.position.y-1.8&&y<=camera.position.y)return;addBlock(x,y,z,selectedBlock)}});
+function updatePlayer(dt){if(!playing)return;const move=new THREE.Vector3();if(keys.KeyW||keys.ArrowUp)move.z-=1;if(keys.KeyS||keys.ArrowDown)move.z+=1;if(keys.KeyA||keys.ArrowLeft)move.x-=1;if(keys.KeyD||keys.ArrowRight)move.x+=1;if(move.lengthSq()){move.normalize().applyAxisAngle(new THREE.Vector3(0,1,0),yaw);camera.position.x+=move.x*6*dt;camera.position.z+=move.z*6*dt}velocityY-=20*dt;camera.position.y+=velocityY*dt;if(camera.position.y<4.5){camera.position.y=4.5;velocityY=0;grounded=true}}
+let last=performance.now();function animate(now){requestAnimationFrame(animate);const dt=Math.min((now-last)/1000,.05);last=now;updatePlayer(dt);renderer.render(scene,camera)}requestAnimationFrame(animate);
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+window.addEventListener('error',e=>{errorMessage.textContent='Game error: '+e.message;errorMessage.style.display='block'});
