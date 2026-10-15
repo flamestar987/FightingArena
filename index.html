@@ -1,14 +1,56 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Block World 3D</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#16261d">
+<meta name="description" content="Explore, build, and survive in Block World, a free voxel sandbox game.">
+<title>Block World — Build & Explore</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div id="menu"><h1>BLOCK WORLD</h1><p>Build your own adventure!</p><button id="playButton">PLAY GAME</button><p class="hint">WASD to move · Mouse to look</p></div>
-<div id="hud"><div id="crosshair">+</div><div id="instructions">WASD: Move · Space: Jump<br>Left click: Break block<br>Right click: Place block<br>ESC: Unlock mouse</div><div id="hotbar"><button data-block="grass">🌿</button><button data-block="dirt">🟫</button><button data-block="stone">⬜</button><button data-block="wood">🪵</button></div></div>
-<div id="errorMessage"></div>
+<main id="game">
+  <canvas id="gameCanvas" aria-label="3D block world game"></canvas>
+  <section id="startScreen" class="screen">
+    <div class="brand-mark">▦</div>
+    <p class="eyebrow">YOUR WORLD. YOUR RULES.</p>
+    <h1>BLOCK<span>WORLD</span></h1>
+    <p class="intro">Mine blocks. Build anything. Explore a world made by you.</p>
+    <div class="mode-picker">
+      <button class="mode active" data-mode="creative"><strong>CREATIVE</strong><small>Build without limits</small></button>
+      <button class="mode" data-mode="survival"><strong>SURVIVAL</strong><small>Watch your health</small></button>
+    </div>
+    <button id="playButton" class="primary">▶ &nbsp; PLAY WORLD</button>
+    <p class="tip">WASD / arrows to move · Space to jump · Click blocks to mine</p>
+    <p class="small-note">A voxel sandbox inspired by block-building games</p>
+  </section>
+  <section id="pauseScreen" class="screen hidden">
+    <p class="eyebrow">TAKE A BREATHER</p><h2>WORLD PAUSED</h2>
+    <button id="resumeButton" class="primary">▶ &nbsp; RESUME</button>
+    <button id="restartButton" class="secondary">↻ &nbsp; NEW WORLD</button>
+    <button id="menuButton" class="secondary">⌂ &nbsp; MAIN MENU</button>
+  </section>
+  <div id="hud" class="hidden">
+    <div class="top-left glass"><div class="brand-mini">▦ BLOCKWORLD</div><div id="modeLabel">CREATIVE MODE</div><div id="positionLabel">X 0 · Z 0</div></div>
+    <div class="top-right"><button id="soundButton" class="icon-button" title="Toggle sound">♫</button><button id="pauseButton" class="icon-button" title="Pause game">Ⅱ</button></div>
+    <div id="crosshair">+</div>
+    <div id="toast" role="status"></div>
+    <div id="survivalStats" class="stats hidden"><div>❤ <span id="healthValue">100</span></div><div>◆ <span id="foodValue">100</span></div></div>
+    <div id="actionHint" class="glass">Aim at a block to mine or build</div>
+    <div id="hotbar" aria-label="Block inventory">
+      <button class="slot selected" data-block="grass" title="Grass block">🟩<small>1</small></button>
+      <button class="slot" data-block="dirt" title="Dirt block">🟫<small>2</small></button>
+      <button class="slot" data-block="stone" title="Stone block">⬜<small>3</small></button>
+      <button class="slot" data-block="wood" title="Wood block">🪵<small>4</small></button>
+      <button class="slot" data-block="leaves" title="Leaves block">🌿<small>5</small></button>
+      <button class="slot" data-block="sand" title="Sand block">🟨<small>6</small></button>
+    </div>
+    <div id="mobileControls">
+      <div class="dpad"><button data-move="forward">▲</button><div><button data-move="left">◀</button><button data-move="back">▼</button><button data-move="right">▶</button></div></div>
+      <div class="mobile-actions"><button id="jumpButton">JUMP</button><button id="mineButton">MINE</button><button id="buildButton">BUILD</button></div>
+    </div>
+  </div>
+  <div id="errorMessage" role="alert" class="hidden"></div>
+</main>
 <script type="module" src="script.js"></script>
 </body></html>
